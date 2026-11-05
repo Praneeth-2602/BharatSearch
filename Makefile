@@ -66,7 +66,12 @@ kind-down:
 	@echo "kind-down: not yet implemented (Week 8)"
 
 autoscale-bench:
-	@echo "autoscale-bench: not yet implemented (Week 8-9)"
+	uv run python -m loadgen.make_curves --seed 1
+	uv run python -m eval.autoscale_backtest --curve loadgen/curves/steady_seed1.csv --forecaster all --horizon-s 75
+	uv run python -m eval.autoscale_backtest --curve loadgen/curves/diurnal_seed1.csv --forecaster all --horizon-s 75
+	uv run python -m eval.autoscale_backtest --curve loadgen/curves/matchday_seed1.csv --forecaster all --horizon-s 75
+	uv run python -m eval.autoscale_backtest --curve loadgen/curves/flashcrowd_seed1.csv --forecaster all --horizon-s 75
+	@echo "autoscale-bench: wrote backtest results to stdout; use eval.autoscale_report.write_report() for the markdown report"
 
 test:
 	uv run pytest tests/ -m "not slow" -q

@@ -245,6 +245,39 @@ class LightGBMQuantileForecaster(Forecaster):
         return self._trained or self._holt.confident()
 
 
+class ScheduleForecaster(Forecaster):
+    """Schedule-based rate floor for S3 (rule-based ladders).
+
+    Returns the scheduled rate for the active time window at ``now + horizon``.
+    No ML model — purely deterministic. Used when a replica floor is taken from
+    a schedule of known events (match start, innings break, peak) plus a ladder
+    over observed request rate.
+    """
+
+    def __init__(
+        self,
+        schedule: list[tuple[float, float, float]] | None = None,
+    ) -> None:
+        """schedule: list of (start_s, end_s, rps) windows, sorted by start_s."""
+        self.schedule = schedule or []
+        self._now: float | None = None
+
+    def update(self, obs: Observation) -> None:
+        self._now = obs.timestamp
+
+    def predict_upper(self, horizon_s: float) -> float:
+        if self._now is None:
+            return 0.0
+        t = self._now + horizon_s
+        for start, end, rps in self.schedule:
+            if start <= t < end:
+                return rps
+        return 0.0
+
+    def confident(self) -> bool:
+        return True
+
+
 class AutoscalerController:
     """Scaling controller combining reactive floor with predictive capacity.
 
@@ -265,6 +298,7 @@ class AutoscalerController:
         max_step: int = 4,
         scale_down_intervals: int = 8,
         forecaster: Forecaster | None = None,
+        strategy: str = "s4",
     ) -> None:
         self.cap_per_pod = cap_per_pod
         self.target_util = target_util
@@ -275,6 +309,7 @@ class AutoscalerController:
         self.max_step = max_step
         self.scale_down_intervals = scale_down_intervals
         self.forecaster = forecaster or HoltLinearForecaster()
+        self.strategy = strategy
         self.current = min_replicas
         self._intervals_below: int = 0
         self._last_scale_time: float | None = None
@@ -332,7 +367,12 @@ class AutoscalerController:
         target = min(max(target, self.min_replicas), self.max_replicas)
 
         now = obs.timestamp
-        mode = "predictive" if confident else "reactive"
+        if self.strategy == "s3":
+            mode = "s3"
+        elif confident:
+            mode = "s4"
+        else:
+            mode = "reactive"
         reason = "ok"
 
         if target > self.current:
@@ -379,5 +419,6 @@ __all__ = [
     "PersistenceForecaster",
     "HoltLinearForecaster",
     "LightGBMQuantileForecaster",
+    "ScheduleForecaster",
     "AutoscalerController",
 ]

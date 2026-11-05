@@ -21,6 +21,7 @@ members = [
     "bharatsearch-common",
     "bharatsearch-contracts",
     "bharatsearch-embedding",
+    "bharatsearch-eval",
     "bharatsearch-features",
     "bharatsearch-kafka-utils",
     "bharatsearch-metrics",
@@ -166,6 +167,11 @@ requires-dist = [
     { name = "uvicorn" },
 ]
 provides-extras = ["sentence-transformers"]
+
+[[package]]
+name = "bharatsearch-eval"
+version = "0.1.0"
+source = { virtual = "eval" }
 
 [[package]]
 name = "bharatsearch-features"

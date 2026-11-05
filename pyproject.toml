@@ -31,6 +31,7 @@ members = [
     "services/simulator",
     "services/autoscaler",
     "libs/autoscaler",
+    "eval",
 ]
 
 [tool.ruff]
