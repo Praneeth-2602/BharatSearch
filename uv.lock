@@ -16,6 +16,8 @@ resolution-markers = [
 [manifest]
 members = [
     "bharatsearch",
+    "bharatsearch-autoscaler",
+    "bharatsearch-autoscaler-service",
     "bharatsearch-common",
     "bharatsearch-contracts",
     "bharatsearch-embedding",
@@ -89,6 +91,28 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
+]
+
+[[package]]
+name = "bharatsearch-autoscaler"
+version = "0.1.0"
+source = { virtual = "libs/autoscaler" }
+
+[[package]]
+name = "bharatsearch-autoscaler-service"
+version = "0.1.0"
+source = { virtual = "services/autoscaler" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "prometheus-client" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi" },
+    { name = "prometheus-client" },
+    { name = "uvicorn" },
 ]
 
 [[package]]

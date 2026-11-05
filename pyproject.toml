@@ -29,6 +29,8 @@ members = [
     "services/embedding",
     "services/rollout",
     "services/simulator",
+    "services/autoscaler",
+    "libs/autoscaler",
 ]
 
 [tool.ruff]
