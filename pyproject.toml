@@ -20,11 +20,15 @@ dev = [
 members = [
     "libs/contracts",
     "libs/common",
+    "libs/features",
     "libs/kafka_utils",
     "libs/metrics",
+    "libs/ranking",
     "services/stub-inference",
     "services/retrieval",
     "services/embedding",
+    "services/rollout",
+    "services/simulator",
 ]
 
 [tool.ruff]
