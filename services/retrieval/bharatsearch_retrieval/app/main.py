@@ -27,17 +27,15 @@ from bharatsearch_common.logging import setup_logging
 from bharatsearch_common.tracing import setup_tracing
 from bharatsearch_contracts import (
     EmbedRequest,
-    Intent,
-    Language,
     SearchRequest,
     SearchResponse,
     SearchResult,
-    Understanding,
 )
 
 from bharatsearch_retrieval.fusion import rrf
 from bharatsearch_retrieval.opensearch import INDEX_NAME, bm25_query
 from bharatsearch_retrieval.qdrant import COLLECTION_NAME
+from bharatsearch_retrieval.understanding import understand
 
 setup_logging(get("RETRIEVAL_LOG_LEVEL", "INFO"))
 _provider = setup_tracing("retrieval")
@@ -167,14 +165,14 @@ async def search(req: SearchRequest) -> SearchResponse:
     return SearchResponse(
         request_id=str(uuid.uuid4()),
         results=results,
-        understanding=Understanding(
-            corrected_query=req.query,
-            language=Language.en,
-            intent=Intent.product,
-            source="fallback",
-        ),
+        understanding=understand(req.query),
         timing_ms=timing,
-        model_versions={"embedder": "stub", "ranker": "rrf", "llm": "none"},
+        model_versions={
+            "embedder": "stub",
+            "ranker": "rrf",
+            "llm": "none",
+            "understanding": "rule-based",
+        },
     )
 
 

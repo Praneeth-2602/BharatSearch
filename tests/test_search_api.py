@@ -51,7 +51,7 @@ async def test_search_contract_and_timing():
     resp = await search(req)
     assert resp.request_id
     assert len(resp.results) > 0
-    assert resp.understanding.source == "fallback"
+    assert resp.understanding.source == "rule-based"
     assert "bm25_ms" in resp.timing_ms
     assert "dense_ms" in resp.timing_ms
     assert "fuse_ms" in resp.timing_ms

@@ -32,7 +32,7 @@ class Understanding(BaseModel):
     language: Language
     intent: Intent
     brand: Optional[str] = None
-    source: str  # "llm" | "cache" | "fallback"
+    source: str  # "llm" | "cache" | "rule-based" | "fallback"
 
 
 class SearchResult(BaseModel):
