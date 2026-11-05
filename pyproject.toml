@@ -1,0 +1,39 @@
+[project]
+name = "bharatsearch"
+version = "0.1.0"
+description = "BharatSearch + Predictive Autoscaler: Hinglish-aware commerce search with a predictive autoscaler"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pytest",
+    "pre-commit",
+]
+
+[tool.uv.workspace]
+members = [
+    "libs/contracts",
+    "libs/common",
+    "libs/kafka_utils",
+    "libs/metrics",
+    "services/stub-inference",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "C4", "PLC", "PLE", "PLR", "PLW"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLR2004"]
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+    "e2e: end-to-end tests",
+    "slow: slow tests",
+]
+testpaths = ["tests"]

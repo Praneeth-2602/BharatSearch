@@ -1,0 +1,24 @@
+# BharatSearch default configuration (Section 0.3: config from env + config/default.yaml).
+# Values here are defaults; environment variables override them.
+
+profile: lite
+
+model_server:
+  url: http://localhost:8000
+  model: stub
+
+ports:
+  opensearch: 9200
+  qdrant: 6333
+  redis: 6379
+  kafka: 9092
+
+search:
+  default_k: 20
+  rrf_k: 60
+
+autoscaler:
+  interval_seconds: 15
+  horizon_seconds: 75
+  min_replicas: 2
+  max_replicas: 20

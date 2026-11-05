@@ -1,0 +1,1 @@
+"""Stub inference service package."""
