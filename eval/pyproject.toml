@@ -1,0 +1,7 @@
+[project]
+name = "bharatsearch-eval"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.setuptools.packages.find]
+include = ["eval*"]

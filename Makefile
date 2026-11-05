@@ -38,13 +38,16 @@ clean:
 	docker volume prune -f
 
 data:
-	@echo "data: not yet implemented (Week 2)"
+	uv run python -c "from data.make_variants import make_variants; import json, pathlib; pathlib.Path('data/processed').mkdir(parents=True, exist_ok=True); pathlib.Path('data/processed/variants.json').write_text(json.dumps(make_variants(['phone cover','shoes','water bottle','fone cover sasta'], seed=42), indent=2))"
+	@echo "data: wrote data/processed/variants.json (sample queries; ESCI slice needs 'make setup' data download)"
 
 index:
-	@echo "index: not yet implemented (Week 2-3)"
+	@echo "index: load OpenSearch + Qdrant (requires 'make up PROFILE=lite' + downloaded ESCI dataset)"
+	@echo "  then run: uv run python -m data.make_slice --out data/processed"
 
 eval:
-	@echo "eval: not yet implemented (Week 3)"
+	uv run python -c "from eval.harness import run, write_metrics; qrels={'q1':{'p1':3,'p2':2,'p3':0}}; runs={'bm25':{'q1':['p1','p2','p3']}}; write_metrics(run(qrels, runs),'toy','results')"
+	@echo "eval: wrote results/toy/metrics.json (toy evaluation; full eval needs indexed data)"
 
 smoke:
 	uv run pytest tests/ -q
