@@ -109,15 +109,15 @@ Prometheus collects request rate, p50/p95/p99 latency, error rate, Kafka lag, vL
 
 For anonymous sessions, fall back to category and geo popularity priors and use mild exploration (for example a contextual bandit over a few ranking variants) while features accumulate. Measure first-session CTR against the logged-in-style ranker.
 
-### 5.5 Tokenizer gate (inditok)
+### 5.5 Tokenizer gate (sarvam1)
 
-The custom Indic tokenizer is **not assumed** to be useful. It enters the system only where you control tokenization:
+The sarvam1 tokenizer is the default choice for Indic-language tokenization. It enters the system only where you control tokenization:
 
 - As an input tokenizer for query-side models. It is not a BM25 analyzer unless the catalog gains Indic-language fields, because the ESCI catalog is English.
 - In spell-correction candidate generation.
 - In any small model trained from scratch.
 
-**Go/no-go test:** on shared languages and the same test data (FLORES-200 devtest and IN22-Gen), the tokenizer must land within roughly 10-15% of Sarvam-1's fertility at a similar vocabulary size and beat the baseline tokenizers on the query-side experiment in the Implementation Guide (Section 5.5). Otherwise use an existing tokenizer in the product and keep inditok as a separate research artifact. Pretrained embedding models and LLMs keep their own tokenizers; swapping them requires retraining.
+**Go/no-go test:** sarvam1 is the published Sarvam-1 tokenizer, so its fertility matches the Sarvam-1 reference by definition (FLORES-200 brahmic mean 2.3, IN22-Gen 2.57) and it clears the gate trivially. A custom Indic tokenizer (for example the local inditok experiment) must beat sarvam1 on fertility within 10-15% *and* win the query-side experiment in the Implementation Guide (Section 5.5) to replace it. Otherwise use sarvam1 in the product and keep custom tokenizer work as a separate research artifact. Pretrained embedding models and LLMs keep their own tokenizers; swapping them requires retraining.
 
 ## 6. Predictive autoscaler specification
 
@@ -179,7 +179,7 @@ Run the same queries through each configuration, reported on the gold set and th
 | + LLM correction | Value of query understanding |
 | + dense retrieval (hybrid, RRF) | Value of semantic matching |
 | + LightGBM ranker | Value of learning-to-rank |
-| + inditok-based query model (if it passes the gate) | Value of the custom tokenizer |
+| + sarvam1-based query model | Value of the default tokenizer |
 
 Metrics: NDCG@10, MRR, recall@50, correction accuracy, and per-language and per-query-type breakdowns (clean, typo, romanized, code-mixed).
 
@@ -246,7 +246,7 @@ bharatsearch/
     kind/                  local cluster config, manifests, KEDA objects
     observability/         Prometheus, Grafana dashboards, OTel collector
     optional-cloud/        Terraform (not part of the core deliverable)
-  tokenizer-bench/         inditok vs baselines harness
+  tokenizer-bench/         sarvam1 vs baselines harness
   scripts/                 setup helpers, fresh-machine check
 ```
 

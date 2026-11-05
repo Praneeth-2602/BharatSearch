@@ -8,7 +8,7 @@ Build the system in the order below: every section ends with an acceptance test 
 
 | Layer | Choice | Local note |
 | --- | --- | --- |
-| Language | Python 3.12 for services, eval, forecasting | Rust only where inditok already uses it |
+| Language | Python 3.12 for services, eval, forecasting | No Rust components; sarvam1 is a published tokenizer |
 | Packaging | uv with a lockfile, ruff, pytest, pre-commit | One workspace, shared `libs/` |
 | API | FastAPI + Uvicorn, pydantic v2 contracts | Every contract lives in `libs/contracts` |
 | Lexical search | OpenSearch, single node, security plugin off | 1 GB heap in the lite profile |
@@ -183,7 +183,7 @@ State in the write-up that variants are synthetic and the gold set is single-rev
 }
 ```
 
-`title_tok` is reserved for text pre-tokenized by inditok (Section 5.5); leave it empty until the tokenizer passes its gate. Query with a `multi_match` over `title^3`, `title.en^2`, `brand^2`, `bullets`, and `description^0.5`. Keep the query-builder in one function so analyzer experiments swap fields, not code.
+`title_tok` is reserved for text pre-tokenized by sarvam1 (Section 5.5); leave it empty until the tokenizer passes its gate. Query with a `multi_match` over `title^3`, `title.en^2`, `brand^2`, `bullets`, and `description^0.5`. Keep the query-builder in one function so analyzer experiments swap fields, not code.
 
 ### 3.2 Qdrant collection and embeddings
 
@@ -312,7 +312,7 @@ Run these configurations on `gold_dev` while tuning, and on `gold_test` once at 
 
 **Decision rule:** keep the LLM step only if the NDCG@10 gain on the `hinglish_roman` and `codemixed` slices has a confidence interval above zero and p95 added latency on a cache miss stays within the budget you set after measuring (write the budget in `config/default.yaml`). Otherwise ship the cheap path and say so in the write-up.
 
-### 5.5 Where inditok fits, and the experiment that decides it
+### 5.5 Where sarvam1 fits, and the experiment that decides it
 
 The catalog is English, so a custom Indic tokenizer has no useful role as a BM25 analyzer unless you add Indic-language product fields (an optional stretch: LLM-translated titles for a catalog subset, indexed in `title_tok`). Correct the earlier plan accordingly. The place it can genuinely help is query-side modeling, so test it there:
 
@@ -320,12 +320,11 @@ The catalog is English, so a custom Indic tokenizer has no useful role as a BM25
 
 | Tokenizer | Role |
 | --- | --- |
-| inditok | System under test |
-| Sarvam-1 tokenizer | Closest-size published baseline |
+| sarvam1 | System under test (default choice) |
 | XLM-R tokenizer | Standard multilingual encoder tokenizer |
 | Byte-level | Floor that needs no vocabulary |
 
-**Gate:** inditok is wired into the product (as the fast-path encoder or the language classifier's input) only if it matches or beats the best baseline on the `hinglish_roman` and `devanagari` slices by paired bootstrap and the fertility benchmark from the project doc supports it. If not, publish the comparison as a research note and use the best-performing tokenizer. Either result is a legitimate, honest finding.
+**Gate:** sarvam1 is wired into the product (as the fast-path encoder or the language classifier's input) only if it matches or beats the best baseline on the `hinglish_roman` and `devanagari` slices by paired bootstrap and the fertility benchmark from the project doc supports it. If not, publish the comparison as a research note and use the best-performing tokenizer. Either result is a legitimate, honest finding.
 
 **Acceptance test:** an ablation table exists for Section 5.4 with confidence intervals; the T1 comparison table exists; a unit test covers every guard; and killing the model server mid-run leaves search working in fallback mode with no errors visible to the client.
 

@@ -3,7 +3,7 @@
 Index schema:
   product_id (keyword), title (text, en sub-field), brand (text + raw keyword),
   bullets (text), description (text), cluster_id (integer), title_tok (text,
-  whitespace analyzer, reserved for inditok pre-tokenized text).
+  whitespace analyzer, reserved for sarvam1 pre-tokenized text).
 """
 
 from __future__ import annotations
