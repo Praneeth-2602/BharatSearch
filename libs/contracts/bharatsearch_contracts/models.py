@@ -75,3 +75,19 @@ class EventEnvelope(BaseModel):
     session_id: str
     request_id: str
     payload: dict
+
+
+class EmbedRequest(BaseModel):
+    """Request to embed one or more texts (Implementation Guide, Section 3.2)."""
+
+    texts: list[str]
+    input_type: str = "query"  # "query" | "passage"
+    model: Optional[str] = None
+
+
+class EmbedResponse(BaseModel):
+    """Response from the embedding service."""
+
+    embeddings: list[list[float]]
+    model: str
+    usage: dict[str, int]

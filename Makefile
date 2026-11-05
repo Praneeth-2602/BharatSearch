@@ -14,10 +14,10 @@ export
 
 COMPOSE := docker compose --profile $(PROFILE)
 
-.PHONY: help setup up down clean data index eval smoke demo kind-up kind-down autoscale-bench test lint
+.PHONY: help setup up down clean data index eval benchmark smoke run-embedding run-retrieval demo kind-up kind-down autoscale-bench test lint
 
 help:
-	@echo "BharatSearch targets: setup up down clean data index eval smoke demo kind-up kind-down autoscale-bench test lint"
+	@echo "BharatSearch targets: setup up down clean data index eval benchmark smoke run-embedding run-retrieval demo kind-up kind-down autoscale-bench test lint"
 
 setup: .env
 	uv sync --dev
@@ -49,6 +49,10 @@ eval:
 	uv run python -c "from eval.harness import run, write_metrics; qrels={'q1':{'p1':3,'p2':2,'p3':0}}; runs={'bm25':{'q1':['p1','p2','p3']}}; write_metrics(run(qrels, runs),'toy','results')"
 	@echo "eval: wrote results/toy/metrics.json (toy evaluation; full eval needs indexed data)"
 
+benchmark:
+	uv run python -m eval.benchmark
+	@echo "benchmark: wrote docs/benchmarks/$(shell date +%F).md (BM25 vs hybrid by slice)"
+
 smoke:
 	uv run pytest tests/ -q
 
@@ -70,3 +74,9 @@ test:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
+
+run-embedding:
+	uv run python -m bharatsearch_embedding.app.main
+
+run-retrieval:
+	uv run python -m bharatsearch_retrieval.app.main

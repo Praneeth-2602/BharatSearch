@@ -1,0 +1,11 @@
+[project]
+name = "bharatsearch-embedding"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi", "uvicorn", "prometheus-client"]
+
+[project.optional-dependencies]
+sentence-transformers = ["sentence-transformers"]
+
+[tool.setuptools.packages.find]
+include = ["bharatsearch_embedding*"]

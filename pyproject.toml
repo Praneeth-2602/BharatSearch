@@ -24,6 +24,7 @@ members = [
     "libs/metrics",
     "services/stub-inference",
     "services/retrieval",
+    "services/embedding",
 ]
 
 [tool.ruff]

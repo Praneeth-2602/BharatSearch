@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "opensearch-py",
     "qdrant-client",
+    "httpx",
 ]
 
 [tool.setuptools.packages.find]

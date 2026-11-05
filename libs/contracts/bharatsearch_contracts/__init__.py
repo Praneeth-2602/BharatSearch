@@ -5,6 +5,8 @@ Section 0, rule 2).
 """
 
 from bharatsearch_contracts.models import (
+    EmbedRequest,
+    EmbedResponse,
     EventEnvelope,
     EventType,
     Intent,
@@ -16,6 +18,8 @@ from bharatsearch_contracts.models import (
 )
 
 __all__ = [
+    "EmbedRequest",
+    "EmbedResponse",
     "EventEnvelope",
     "EventType",
     "Intent",
