@@ -1,0 +1,39 @@
+# BharatSearch observability stack (Implementation Guide, Section 10).
+#
+# Provisioned from files — no manual clicking. A fresh clone gets identical
+# dashboards and alerts.
+#
+#   docker compose -f deploy/observability/compose.yml up -d
+#
+# Prometheus:   http://localhost:9090
+# Grafana:      http://localhost:3000 (admin / admin)
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+    networks:
+      - bharatsearch
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - bharatsearch
+
+networks:
+  bharatsearch:
+    driver: bridge

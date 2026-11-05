@@ -1,0 +1,61 @@
+# Prometheus alerting rules (Implementation Guide, Section 10).
+# Autoscaler and service SLO alerts.
+
+groups:
+  - name: autoscaler
+    rules:
+      - alert: AutoscalerSLOViolation
+        expr: |
+          (
+            histogram_quantile(0.99, sum by (le) (rate(gateway_request_duration_seconds_bucket[1m]))) > 0.4
+          ) or (
+            sum(rate(gateway_requests_total{code=~"5..|timeout"}[1m])) /
+            sum(rate(gateway_requests_total[1m])) > 0.01
+        )
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Autoscaler SLO violation: p99 > 400ms or error ratio > 1%"
+          description: "SLO target missed for a one-minute window."
+
+      - alert: AutoscalerThrash
+        expr: |
+          delta(autoscaler_current_replicas[10m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Autoscaler thrashing: more than 5 replica changes in 10 minutes"
+          description: "Replica count is oscillating; check controller cooldown and step settings."
+
+      - alert: AutoscalerFallbackMode
+        expr: |
+          avg_over_time(autoscaler_mode{mode="reactive"}[10m]) > 0.8
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Autoscaler in reactive fallback mode for most of the last 10 minutes"
+          description: "Predictive forecaster has lost confidence; check forecaster coverage and pinball loss."
+
+  - name: service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} at {{ $labels.instance }} has been down for more than 30 seconds."
+
+      - alert: ConsumerLagHigh
+        expr: |
+          consumer_lag{group="feature-updater"} > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "Consumer lag for {{ $labels.group }} on {{ $labels.topic }} partition {{ $labels.partition }} is {{ $value }}."

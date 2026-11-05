@@ -57,7 +57,11 @@ smoke:
 	uv run pytest tests/ -q
 
 demo:
-	@echo "demo: not yet implemented (Week 10)"
+	@echo "Running demo steps (requires stack up: make up PROFILE=standard)"
+	@echo "Step 1: compare search results"
+	uv run python -m demo.compare 'fone cover sasta' || true
+	@echo "Step 5: view autoscaler results"
+	@cat docs/benchmarks/autoscale-*.md 2>/dev/null || true
 
 kind-up:
 	@echo "kind-up: not yet implemented (Week 8)"
