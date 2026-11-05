@@ -32,6 +32,13 @@ from bharatsearch_contracts import (
     SearchResult,
 )
 
+from bharatsearch_retrieval.events import (
+    ClickRequest,
+    ImpressionRequest,
+    publish_click_event,
+    publish_impression_event,
+    publish_query_event,
+)
 from bharatsearch_retrieval.fusion import rrf
 from bharatsearch_retrieval.opensearch import INDEX_NAME, bm25_query
 from bharatsearch_retrieval.qdrant import COLLECTION_NAME
@@ -162,7 +169,7 @@ async def search(req: SearchRequest) -> SearchResponse:
     SEARCH_REQUESTS_TOTAL.inc()
     SEARCH_LATENCY.observe(time.time() - start)
 
-    return SearchResponse(
+    resp = SearchResponse(
         request_id=str(uuid.uuid4()),
         results=results,
         understanding=understand(req.query),
@@ -174,6 +181,20 @@ async def search(req: SearchRequest) -> SearchResponse:
             "understanding": "rule-based",
         },
     )
+    publish_query_event(req, resp)
+    return resp
+
+
+@app.post("/v1/impression")
+async def impression(req: ImpressionRequest) -> PlainTextResponse:
+    publish_impression_event(req.session_id, req.request_id, req.product_ids)
+    return PlainTextResponse("ok")
+
+
+@app.post("/v1/click")
+async def click(req: ClickRequest) -> PlainTextResponse:
+    publish_click_event(req.session_id, req.request_id, req.product_id, req.position)
+    return PlainTextResponse("ok")
 
 
 if __name__ == "__main__":
