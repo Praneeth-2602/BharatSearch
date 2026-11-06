@@ -42,8 +42,8 @@ data:
 	@echo "data: wrote data/processed/variants.json (sample queries; ESCI slice needs 'make setup' data download)"
 
 index:
-	@echo "index: load OpenSearch + Qdrant (requires 'make up PROFILE=lite' + downloaded ESCI dataset)"
-	@echo "  then run: uv run python -m data.make_slice --out data/processed"
+	uv run python -m data.index_products
+	@echo "index: created OpenSearch 'products' index + Qdrant 'products' collection with sample catalog"
 
 eval:
 	uv run python -c "from eval.harness import run, write_metrics; qrels={'q1':{'p1':3,'p2':2,'p3':0}}; runs={'bm25':{'q1':['p1','p2','p3']}}; write_metrics(run(qrels, runs),'toy','results')"

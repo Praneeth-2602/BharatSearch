@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BharatSearch</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: #0B0F19;
+    color: #E2E8F0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 2rem;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  header { margin-bottom: 3rem; }
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .tagline {
+    color: #94A3B8;
+    font-size: 1rem;
+  }
+  form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    background: #151E2E;
+    border: 1px solid #334155;
+    color: #E2E8F0;
+  }
+  input[type="text"]:focus {
+    outline: 2px solid #F0B90B;
+    border-color: transparent;
+  }
+  button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+    background: #F0B90B;
+    color: #0B0F19;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { background: #E5A900; }
+  button:focus-visible { outline: 2px solid #F0B90B; outline-offset: 2px; }
+
+  .meta-strip {
+    background: #151E2E;
+    border: 1px solid #334155;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    color: #94A3B8;
+  }
+  .meta-strip strong { color: #E2E8F0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+  }
+  th {
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #94A3B8;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid #334155;
+  }
+  td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #334155;
+    font-size: 1rem;
+  }
+  tr:last-child td { border-bottom: none; }
+  .rank { font-weight: 700; color: #F0B90B; }
+  .score { font-family: ui-monospace, SFMono-Regular, monospace; }
+
+  .error {
+    background: #7F1D1D;
+    color: #FECACA;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #991B1B;
+    font-size: 0.875rem;
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem; }
+    h1 { font-size: 2rem; }
+    form { flex-direction: column; }
+    button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>BharatSearch</h1>
+    <p class="tagline">Hinglish-aware commerce search</p>
+  </header>
+
+  <form id="search-form">
+    <input type="text" id="query" placeholder="fone cover sasta" autocomplete="off" required>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="understanding" class="meta-strip" style="display:none">
+    <strong>Query understanding:</strong> <span id="understanding-text"></span>
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <table id="results-table" style="display:none">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Product ID</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="results-body"></tbody>
+  </table>
+
+  <div id="timing" class="meta-strip" style="display:none">
+    <strong>Timing:</strong> <span id="timing-text"></span>
+  </div>
+</div>
+<script>
+  const form = document.getElementById('search-form');
+  const queryInput = document.getElementById('query');
+  const resultsTable = document.getElementById('results-table');
+  const resultsBody = document.getElementById('results-body');
+  const understanding = document.getElementById('understanding');
+  const understandingText = document.getElementById('understanding-text');
+  const timing = document.getElementById('timing');
+  const timingText = document.getElementById('timing-text');
+  const error = document.getElementById('error');
+
+  const API_URL = 'http://localhost:8002/v1/search';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = queryInput.value.trim();
+    if (!query) return;
+
+    error.style.display = 'none';
+    resultsTable.style.display = 'none';
+    understanding.style.display = 'none';
+    timing.style.display = 'none';
+    resultsBody.innerHTML = '';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, session_id: 'frontend', k: 10 })
+      });
+
+      if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+
+      const data = await res.json();
+
+      const u = data.understanding || {};
+      understandingText.textContent = `Corrected: "${u.corrected_query || query}" · Language: ${u.language || '—'} · Intent: ${u.intent || '—'} · Source: ${u.source || '—'}`;
+      understanding.style.display = 'block';
+
+      const t = data.timing_ms || {};
+      timingText.textContent = `Total: ${Math.round(t.total_ms || 0)}ms · BM25: ${Math.round(t.bm25_ms || 0)}ms · Dense: ${Math.round(t.dense_ms || 0)}ms · Fuse: ${Math.round(t.fuse_ms || 0)}ms`;
+      timing.style.display = 'block';
+
+      const results = data.results || [];
+      results.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="rank">#${r.rank}</td>
+          <td>${r.product_id}</td>
+          <td class="score">${(r.score || 0).toFixed(4)}</td>
+        `;
+        resultsBody.appendChild(tr);
+      });
+      resultsTable.style.display = 'table';
+
+    } catch (err) {
+      error.textContent = err.message;
+      error.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>
