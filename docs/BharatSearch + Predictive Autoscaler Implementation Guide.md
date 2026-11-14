@@ -858,6 +858,34 @@ Each week ends with its acceptance tests passing. If you fall behind, cut in the
 - [ ] **Demo:** rehearsed, under ten minutes, with a recorded fallback.
 - [ ] **Resume:** bullets use measured values only and link to the exact result tables.
 
+### 14.1 Definition of done — pass/fail criteria
+
+The release is done when every criterion below passes. Evidence links point to committed result tables; resume bullets use measured values only (§14 Honesty).
+
+| # | Criterion | Pass condition | Evidence |
+|---|-----------|----------------|----------|
+| 1 | 100k slice catalog | 100,000 products (50,481 judged + 49,519 distractors); disjoint bench/dev/test queries | `results/gold_dev.json`, `results/gold_test.json` |
+| 2 | OpenSearch slice indexed | `products` index count = 100,000 | `curl /products/_count` |
+| 3 | Qdrant slice indexed with real vectors | `products` collection points ≈ 100,000, status green, real e5 vectors (not stub) | `data/reindex_qdrant_real.py` (MPS, batch 256, sorted by length, pipelined) |
+| 4 | BM25 baseline | nDCG@10, MRR@10, Recall@10, Judged@10 reported with 95% CI | `results/esci_benchmark/esci/metrics.json` |
+| 5 | Dense baseline | nDCG@10, MRR@10, Recall@10, Judged@10 reported with 95% CI | `results/esci_benchmark/esci/metrics.json` |
+| 6 | Hybrid (RRF) baseline | nDCG@10, MRR@10, Recall@10, Judged@10 reported with 95% CI | `results/esci_benchmark/esci/metrics.json` |
+| 7 | Bootstrap CIs | 95% CI per config/metric via 1,000 query resamples | `ci_95` in `results/esci_benchmark/esci/metrics.json` |
+| 8 | Measured baseline beats stub | BM25 nDCG@10 ≫ 0.048 (old stub-embedding baseline); Hybrid > Dense > BM25 | `results/esci_benchmark/esci/metrics.json` |
+| 9 | Lint/format clean | `uv run ruff check . && uv run ruff format --check .` passes | ruff output |
+| 10 | Tests pass | `uv run pytest tests/ -q -m "not slow"` green | pytest output |
+| 11 | Committed & pushed | Descriptive commit message, no `Co-Authored-By`, pushed to `Praneeth-2602/BharatSearch` | `git log`, `git push` |
+
+Measured results (k=10, 2,000 clean English queries):
+
+| Config | nDCG@10 | CI 95% (nDCG@10) | MRR@10 | Recall@10 | Judged@10 |
+|--------|---------|------------------|--------|-----------|-----------|
+| BM25 | 0.4543 | [0.4384, 0.4704] | 0.5907 | 0.3448 | 0.4424 |
+| Dense | 0.4789 | [0.4636, 0.4960] | 0.6192 | 0.3586 | 0.4668 |
+| Hybrid | 0.4911 | [0.4755, 0.5060] | 0.6323 | 0.3718 | 0.4746 |
+
+Result tables: `results/esci_benchmark/esci/metrics.json`, `results/esci_benchmark/queries.json`. Tracking file: `docs/resume-project-tracking.md`.
+
 ## Appendix A: decisions to record as ADRs
 
 1. RRF against weighted score fusion, and the tuned `k`.
