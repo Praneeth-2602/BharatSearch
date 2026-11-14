@@ -97,6 +97,26 @@
     display: none;
   }
 
+  .navbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #334155;
+  }
+  .navbar a {
+    color: #94A3B8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 0;
+  }
+  .navbar a:hover { color: #E2E8F0; }
+  .navbar a.active {
+    color: #F0B90B;
+    border-bottom: 2px solid #F0B90B;
+  }
+
   @media (max-width: 480px) {
     body { padding: 1rem; }
     h1 { font-size: 2rem; }
@@ -111,6 +131,11 @@
     <h1>BharatSearch</h1>
     <p class="tagline">Hinglish-aware commerce search</p>
   </header>
+
+  <nav class="navbar">
+    <a href="index.html" class="active">Search</a>
+    <a href="load-test.html">Load Test</a>
+  </nav>
 
   <form id="search-form">
     <input type="text" id="query" placeholder="fone cover sasta" autocomplete="off" required>
@@ -127,6 +152,8 @@
     <thead>
       <tr>
         <th>Rank</th>
+        <th>Title</th>
+        <th>Brand</th>
         <th>Product ID</th>
         <th>Score</th>
       </tr>
@@ -186,6 +213,8 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="rank">#${r.rank}</td>
+          <td>${r.title || r.product_id}</td>
+          <td>${r.brand || '—'}</td>
           <td>${r.product_id}</td>
           <td class="score">${(r.score || 0).toFixed(4)}</td>
         `;

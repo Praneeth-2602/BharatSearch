@@ -59,6 +59,30 @@ SAMPLE_PRODUCTS = [
         "description": "Protective smartphone case",
         "cluster_id": 1,
     },
+    {
+        "product_id": "p6",
+        "title": "sasta shirt",
+        "brand": "Generic",
+        "bullets": ["Cotton", "Affordable"],
+        "description": "Budget cotton shirt for daily wear",
+        "cluster_id": 4,
+    },
+    {
+        "product_id": "p7",
+        "title": "formal shirt",
+        "brand": "Generic",
+        "bullets": ["Office wear", "Wrinkle-free"],
+        "description": "Formal shirt for office and events",
+        "cluster_id": 4,
+    },
+    {
+        "product_id": "p8",
+        "title": "casual shirt",
+        "brand": "Generic",
+        "bullets": ["Comfortable", "Everyday"],
+        "description": "Casual shirt for weekend wear",
+        "cluster_id": 4,
+    },
 ]
 
 
@@ -116,6 +140,8 @@ def create_qdrant_collection(client: httpx.Client) -> None:
                 "payload": {
                     "product_id": p["product_id"],
                     "cluster_id": p["cluster_id"],
+                    "title": p["title"],
+                    "brand": p["brand"],
                 },
             }
         )

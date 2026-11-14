@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BharatSearch — Load Test Simulator</title>
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: #0B0F19;
+    color: #E2E8F0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 2rem; }
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .tagline {
+    color: #94A3B8;
+    font-size: 1rem;
+  }
+  .navbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #334155;
+  }
+  .navbar a {
+    color: #94A3B8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 0;
+  }
+  .navbar a:hover { color: #E2E8F0; }
+  .navbar a.active {
+    color: #F0B90B;
+    border-bottom: 2px solid #F0B90B;
+  }
+  .arch-diagram {
+    background: #151E2E;
+    border: 1px solid #334155;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+  }
+  .arch-diagram h2 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: #F0B90B;
+  }
+  .controls {
+    background: #151E2E;
+    border: 1px solid #334155;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+  }
+  .controls h2 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: #F0B90B;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .form-field label {
+    font-size: 0.875rem;
+    color: #94A3B8;
+  }
+  .form-field input, .form-field select {
+    padding: 0.625rem 0.875rem;
+    background: #0B0F19;
+    border: 1px solid #334155;
+    color: #E2E8F0;
+    font-size: 1rem;
+  }
+  .form-field input:focus, .form-field select:focus {
+    outline: 2px solid #F0B90B;
+    border-color: transparent;
+  }
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: end;
+  }
+  button {
+    padding: 0.625rem 1.5rem;
+    font-size: 1rem;
+    background: #F0B90B;
+    color: #0B0F19;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 4px;
+  }
+  button:hover { background: #E5A900; }
+  button:disabled {
+    background: #334155;
+    color: #94A3B8;
+    cursor: not-allowed;
+  }
+  button.secondary {
+    background: #151E2E;
+    color: #E2E8F0;
+    border: 1px solid #334155;
+  }
+  button.secondary:hover { background: #1E293B; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: #151E2E;
+    border: 1px solid #334155;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+  }
+  .metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #F0B90B;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+  }
+  .metric-label {
+    font-size: 0.75rem;
+    color: #94A3B8;
+    margin-top: 0.25rem;
+  }
+  .status {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .status.running { color: #22C55E; }
+  .status.stopped { color: #94A3B8; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background: #151E2E;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th {
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #94A3B8;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #334155;
+  }
+  td {
+    padding: 0.625rem 0.5rem;
+    border-bottom: 1px solid #334155;
+    font-size: 0.875rem;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) { background: #0E1523; }
+  .latency-ok { color: #22C55E; }
+  .latency-warn { color: #EAB308; }
+  .latency-bad { color: #EF4444; }
+  .log {
+    background: #0B0F19;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 0.75rem;
+    color: #94A3B8;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  .log-entry { margin-bottom: 0.25rem; }
+  .log-entry.ok { color: #22C55E; }
+  .log-entry.err { color: #EF4444; }
+  .error {
+    background: #7F1D1D;
+    color: #FECACA;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #991B1B;
+    font-size: 0.875rem;
+    display: none;
+  }
+  @media (max-width: 480px) {
+    body { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .actions { flex-direction: column; align-items: stretch; }
+    .actions button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>BharatSearch</h1>
+    <p class="tagline">Load test simulator · Hinglish-aware commerce search</p>
+  <nav class="navbar">
+    <a href="index.html">Search</a>
+    <a href="load-test.html" class="active">Load Test</a>
+  </nav>
+
+  <!-- Architecture diagram (from README.md) -->
+  <div class="arch-diagram">
+    <h2>Architecture</h2>
+    <div class="mermaid" id="arch">
+      flowchart LR
+        C[Client / load generator] --> G[gateway]
+        G --> QU[query understanding]
+        QU --> M[model server]
+        G --> R[retrieval: OpenSearch + Qdrant]
+        G --> K[ranker]
+        G -- impressions --> KAF[(Kafka)]
+        SIM[click simulator] -- clicks --> KAF
+        KAF --> SP[stream processor]
+        SP --> RED[(Redis features)]
+        SP --> PQ[(Parquet logs)]
+        PQ --> T[trainer] --> REG[model registry] --> RC[rollout controller] --> K
+    </div>
+  </div>
+
+  <!-- Load test controls -->
+  <div class="controls" id="controls">
+    <h2>Load Test</h2>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Query</label>
+        <input type="text" id="lt-query" value="fone cover sasta">
+      </div>
+      <div class="form-field">
+        <label>Session ID</label>
+        <input type="text" id="lt-session" value="load-test">
+      </div>
+      <div class="form-field">
+        <label>Requests/sec</label>
+        <input type="number" id="lt-rps" value="5" min="1" max="1000">
+      </div>
+      <div class="form-field">
+        <label>Concurrency</label>
+        <input type="number" id="lt-concurrency" value="3" min="1" max="50">
+      </div>
+      <div class="form-field">
+        <label>Duration (s)</label>
+        <input type="number" id="lt-duration" value="30" min="1" max="3600">
+      </div>
+      <div class="form-field" style="display: flex; align-items: end;">
+        <button id="lt-start" onclick="startTest()">Start Load Test</button>
+        <button id="lt-stop" onclick="stopTest()" disabled class="secondary">Stop</button>
+      </div>
+    </div>
+    <div class="status" id="lt-status">Stopped</div>
+  </div>
+
+  <!-- Live metrics -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-value" id="m-total">0</div>
+      <div class="metric-label">Total requests</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-ok">0</div>
+      <div class="metric-label">Successful</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-fail">0</div>
+      <div class="metric-label">Failed</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-rps">0</div>
+      <div class="metric-label">Current RPS</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-avg-lat">0ms</div>
+      <div class="metric-label">Avg latency</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-p95-lat">0ms</div>
+      <div class="metric-label">P95 latency</div>
+    </div>
+  </div>
+
+  <div id="lt-log" class="log"></div>
+
+  <div id="lt-error" class="error"></div>
+
+  <!-- Recent results -->
+  <h2 style="margin-bottom:0.5rem; color:#F0B90B;">Recent results</h2>
+  <table id="lt-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Latency</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody id="lt-table-body"></tbody>
+  </table>
+</div>
+
+<script>
+  const API_URL = 'http://localhost:8002/v1/search';
+  let running = false;
+  let results = [];
+  let intervalId = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function log(msg, type = 'info') {
+    const logEl = $('lt-log');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type === 'error' ? 'err' : type === 'ok' ? 'ok' : ''}`;
+    entry.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+    logEl.prepend(entry);
+    if (logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
+  }
+
+  function percentile(sorted, p) {
+    if (!sorted.length) return 0;
+    const idx = Math.ceil((p / 100) * sorted.length) - 1;
+    return sorted[Math.max(0, Math.min(idx, sorted.length - 1))];
+  }
+
+  function updateMetrics() {
+    const ok = results.filter(r => r.ok).length;
+    const fail = results.length - ok;
+    const lats = results.filter(r => r.ok).map(r => r.lat).sort((a, b) => a - b);
+    const avg = lats.length ? (lats.reduce((a, b) => a + b, 0) / lats.length).toFixed(1) : 0;
+    const p95 = lats.length ? percentile(lats, 95).toFixed(1) : 0;
+    const elapsed = running ? (Date.now() - startTime) / 1000 : 0;
+
+    $('m-total').textContent = results.length;
+    $('m-ok').textContent = ok;
+    $('m-fail').textContent = fail;
+    $('m-rps').textContent = elapsed > 0 ? (results.length / elapsed).toFixed(1) : 0;
+    $('m-avg-lat').textContent = avg + 'ms';
+    $('m-p95-lat').textContent = p95 + 'ms';
+
+    const statusEl = $('lt-status');
+    statusEl.textContent = running ? 'Running' : 'Stopped';
+    statusEl.className = 'status ' + (running ? 'running' : 'stopped');
+  }
+
+  let startTime = 0;
+
+  function addRow(result) {
+    const tbody = $('lt-table-body');
+    const tr = document.createElement('tr');
+    const latClass = result.lat > 500 ? 'latency-bad' : result.lat > 200 ? 'latency-warn' : 'latency-ok';
+    tr.innerHTML = `
+      <td>${result.idx}</td>
+      <td>${new Date(result.ts).toLocaleTimeString()}</td>
+      <td>${result.ok ? 'OK' : 'ERR'}</td>
+      <td class="${latClass}">${result.lat.toFixed(0)}ms</td>
+      <td>${result.ok ? result.body : result.error}</td>
+    `;
+    tbody.prepend(tr);
+    if (tbody.children.length > 100) tbody.removeChild(tbody.lastChild);
+  }
+
+  async function sendRequest(idx) {
+    const t0 = performance.now();
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: $('lt-query').value,
+          session_id: $('lt-session').value,
+          k: 10
+        })
+      });
+      const lat = performance.now() - t0;
+      const ok = res.ok;
+      let body = '—';
+      if (ok) {
+        const d = await res.json();
+        const top = d.results && d.results[0];
+        body = (top && top.title) || (top && top.product_id) || '—';
+      } else {
+        body = res.status + ' ' + res.statusText;
+      }
+      results.push({ idx, ok, lat, ts: Date.now(), body });
+      addRow({ idx, ok, lat, ts: Date.now(), body });
+      if (ok) log(`req #${idx} OK ${lat.toFixed(0)}ms → ${body}`, 'ok');
+      else log(`req #${idx} FAIL ${body}`, 'error');
+    } catch (err) {
+      const lat = performance.now() - t0;
+      results.push({ idx, ok: false, lat, ts: Date.now(), error: err.message });
+      addRow({ idx, ok: false, lat, ts: Date.now(), error: err.message });
+      log(`req #${idx} ERROR ${err.message}`, 'error');
+    }
+    updateMetrics();
+  }
+
+  function finish() {
+    running = false;
+    $('lt-start').disabled = false;
+    $('lt-stop').disabled = true;
+    if (intervalId) clearInterval(intervalId);
+    updateMetrics();
+    log('Load test finished.');
+  }
+
+  function startTest() {
+    const rps = parseInt($('lt-rps').value, 10);
+    const concurrency = parseInt($('lt-concurrency').value, 10);
+    const duration = parseInt($('lt-duration').value, 10);
+    if (!rps || !duration || !concurrency) return;
+
+    results = [];
+    $('lt-table-body').innerHTML = '';
+    $('m-total').textContent = '0';
+    $('m-ok').textContent = '0';
+    $('m-fail').textContent = '0';
+    $('m-rps').textContent = '0';
+    $('m-avg-lat').textContent = '0ms';
+    $('m-p95-lat').textContent = '0ms';
+    $('lt-log').innerHTML = '';
+    $('lt-error').style.display = 'none';
+
+    running = true;
+    startTime = Date.now();
+    const endTime = startTime + duration * 1000;
+    $('lt-start').disabled = true;
+    $('lt-stop').disabled = false;
+    log(`Starting load test: ${rps} rps, concurrency ${concurrency}, ${duration}s → ${API_URL}`);
+
+    intervalId = setInterval(updateMetrics, 500);
+
+    let idx = 0;
+    let inFlight = 0;
+    const intervalMs = 1000 / rps;
+    let nextSend = performance.now();
+
+    function tick() {
+      if (!running) {
+        if (inFlight === 0) finish();
+        return;
+      }
+      if (Date.now() >= endTime) {
+        running = false;
+        if (inFlight === 0) finish();
+        return;
+      }
+      const now = performance.now();
+      while (inFlight < concurrency && now >= nextSend && running && Date.now() < endTime) {
+        inFlight++;
+        idx++;
+        sendRequest(idx).then(() => { inFlight--; }).catch(() => { inFlight--; });
+        nextSend += intervalMs;
+      }
+      if (running) requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  function stopTest() {
+    running = false;
+    log('Stopping load test...');
+  }
+
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+</body>
+</html>

@@ -39,6 +39,9 @@ class SearchResult(BaseModel):
     product_id: str
     score: float
     rank: int
+    title: Optional[str] = None
+    brand: Optional[str] = None
+    description: Optional[str] = None
 
 
 class SearchRequest(BaseModel):

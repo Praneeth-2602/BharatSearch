@@ -84,13 +84,13 @@ app.add_middleware(
 )
 
 
-async def _bm25_search(query_text: str, k: int) -> list[tuple[str, float]]:
-    """Run BM25 against OpenSearch; return [(product_id, score)]."""
+async def _bm25_search(query_text: str, k: int) -> list[tuple[str, float, dict]]:
+    """Run BM25 against OpenSearch; return [(product_id, score, _source)]."""
     body = bm25_query(query_text, k=k)
     resp = await _State.http.post(f"{OPENSEARCH_URL}/{INDEX_NAME}/_search", json=body)  # type: ignore[union-attr]
     resp.raise_for_status()
     hits = resp.json()["hits"]["hits"]
-    return [(h["_source"]["product_id"], float(h["_score"])) for h in hits]
+    return [(h["_source"]["product_id"], float(h["_score"]), h["_source"]) for h in hits]
 
 
 async def _embed_query(query_text: str) -> list[float]:
@@ -103,8 +103,8 @@ async def _embed_query(query_text: str) -> list[float]:
     return resp.json()["embeddings"][0]
 
 
-async def _dense_search(query_text: str, k: int) -> list[tuple[str, float]]:
-    """Run dense search against Qdrant; return [(product_id, score)]."""
+async def _dense_search(query_text: str, k: int) -> list[tuple[str, float, dict]]:
+    """Run dense search against Qdrant; return [(product_id, score, payload)]."""
     vector = await _embed_query(query_text)
     resp = await _State.http.post(  # type: ignore[union-attr]
         f"{QDRANT_URL}/collections/{COLLECTION_NAME}/points/search",
@@ -116,7 +116,7 @@ async def _dense_search(query_text: str, k: int) -> list[tuple[str, float]]:
     )
     resp.raise_for_status()
     points = resp.json()["result"]
-    return [(p["payload"]["product_id"], float(p["score"])) for p in points]
+    return [(p["payload"]["product_id"], float(p["score"]), p.get("payload", {})) for p in points]
 
 
 @app.get("/healthz")
@@ -162,14 +162,28 @@ async def search(req: SearchRequest) -> SearchResponse:
         with _tracer.start_as_current_span("retrieval.fuse"):
             t0 = time.time()
             fused = rrf(
-                [[pid for pid, _ in bm25_results], [pid for pid, _ in dense_results]],
+                [[pid for pid, _, _ in bm25_results], [pid for pid, _, _ in dense_results]],
                 k=RRF_K,
                 top=k,
             )
             timing["fuse_ms"] = (time.time() - t0) * 1000
 
+    pid_to_source: dict[str, dict] = {}
+    for pid, _score, src in bm25_results:
+        pid_to_source[pid] = src
+    for pid, _score, payload in dense_results:
+        if pid not in pid_to_source:
+            pid_to_source[pid] = payload
+
     results = [
-        SearchResult(product_id=pid, score=score, rank=i + 1)
+        SearchResult(
+            product_id=pid,
+            score=score,
+            rank=i + 1,
+            title=pid_to_source.get(pid, {}).get("title"),
+            brand=pid_to_source.get(pid, {}).get("brand"),
+            description=pid_to_source.get(pid, {}).get("description"),
+        )
         for i, (pid, score) in enumerate(fused)
     ]
 

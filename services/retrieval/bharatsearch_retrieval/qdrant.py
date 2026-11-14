@@ -15,5 +15,5 @@ DEFAULT_VECTOR_SIZE = 384  # multilingual-e5-small; verify against pinned model
 def collection_config(vector_size: int = DEFAULT_VECTOR_SIZE) -> dict:
     return {
         "vectors": {"size": vector_size, "distance": "Cosine"},
-        "payload_schema": ["product_id", "cluster_id"],
+        "payload_schema": ["product_id", "cluster_id", "title", "brand"],
     }
