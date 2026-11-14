@@ -76,9 +76,15 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "fastapi" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-sdk" },
     { name = "pre-commit" },
+    { name = "prometheus-client" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "sentence-transformers" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -91,9 +97,15 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "fastapi" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-sdk" },
     { name = "pre-commit" },
+    { name = "prometheus-client" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "sentence-transformers" },
+    { name = "uvicorn" },
 ]
 
 [[package]]

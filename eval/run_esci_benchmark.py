@@ -21,7 +21,7 @@ import pandas as pd
 from bharatsearch_retrieval.opensearch import INDEX_NAME, bm25_query
 from bharatsearch_retrieval.understanding import Language, understand
 
-from eval.harness import run, write_metrics
+from eval.harness import bootstrap_ci, run, write_metrics
 
 QRELS_PATH = Path("results/esci_qrels.json")
 QUERIES_GLOB = "data/esci/queries/*.parquet"
@@ -141,6 +141,11 @@ async def main() -> None:
         await asyncio.gather(*(one(q) for q in queries))
 
     report = run(bench_qrels, runs, k=K)
+    ci = bootstrap_ci(bench_qrels, runs, k=K)
+    for name in report:
+        report[name]["ci_95"] = {}
+        for metric, (lo, hi) in ci[name].items():
+            report[name]["ci_95"][metric] = [lo, hi] if lo is not None else None
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "queries.json").write_text(json.dumps(queries, indent=2))

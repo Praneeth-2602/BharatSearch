@@ -267,6 +267,78 @@ def build_qrels() -> dict:
     return qrels
 
 
+def load_benchmark_query_ids() -> set[str]:
+    """Load the 2,000 benchmark query IDs from results/esci_benchmark/queries.json."""
+    path = Path("results/esci_benchmark/queries.json")
+    if not path.exists():
+        return set()
+    data = json.loads(path.read_text())
+    return {str(q["query_id"]) for q in data}
+
+
+def sample_slice_queries(n_dev: int = 750, n_test: int = 750, seed: int = 42):
+    """Return (bench_qids, dev_qids, test_qids): disjoint query sets totaling ~3,500.
+
+    Benchmark queries (from results/esci_benchmark/queries.json) are kept out of
+    both dev and test, which are disjoint from each other.
+    """
+    qrels = json.loads(QRELS_PATH.read_text())
+    all_qids = set(qrels.keys())
+    bench_qids = load_benchmark_query_ids()
+    remaining = sorted(all_qids - bench_qids)
+    rng = random.Random(seed)
+    dev_test = rng.sample(remaining, n_dev + n_test)
+    dev_qids = set(dev_test[:n_dev])
+    test_qids = set(dev_test[n_dev:])
+    return bench_qids, dev_qids, test_qids
+
+
+def build_slice_catalog(query_ids: set[str], target_total: int = 100_000) -> list[dict]:
+    """Build a catalog of judged products for the given queries, padded with distractors.
+
+    Collects all products judged in qrels for `query_ids`, then pads with random
+    non-judged distractors to reach about `target_total` products.
+    """
+    qrels = json.loads(QRELS_PATH.read_text())
+    judged_ids: set[str] = set()
+    for qid in query_ids:
+        judged_ids.update(qrels.get(qid, {}).keys())
+    judged_products = load_products(judged_ids=judged_ids, distractor_n=0)
+    n_judged = len(judged_products)
+    distractor_n = max(0, target_total - n_judged)
+    products = load_products(judged_ids=judged_ids, distractor_n=distractor_n)
+    print(
+        f"[index_esci] slice catalog: {n_judged} judged + "
+        f"{distractor_n} distractors = {len(products)} products"
+    )
+    return products
+
+
+def write_gold_sets(dev_qids: set[str], test_qids: set[str]) -> None:
+    """Write results/gold_dev.json and results/gold_test.json (qrels subsets)."""
+    qrels = json.loads(QRELS_PATH.read_text())
+    gold_dev = {qid: qrels[qid] for qid in dev_qids if qid in qrels}
+    gold_test = {qid: qrels[qid] for qid in test_qids if qid in qrels}
+    QRELS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    (QRELS_PATH.parent / "gold_dev.json").write_text(json.dumps(gold_dev, indent=2))
+    (QRELS_PATH.parent / "gold_test.json").write_text(json.dumps(gold_test, indent=2))
+    print(f"[index_esci] gold_dev: {len(gold_dev)} queries -> results/gold_dev.json")
+    print(f"[index_esci] gold_test: {len(gold_test)} queries -> results/gold_test.json")
+
+
+def build_slice(n_dev: int = 750, n_test: int = 750, target_total: int = 100_000) -> list[dict]:
+    """Build the 100k slice catalog and gold dev/test sets; return slice products."""
+    bench_qids, dev_qids, test_qids = sample_slice_queries(n_dev, n_test)
+    slice_qids = bench_qids | dev_qids | test_qids
+    print(
+        f"[index_esci] slice queries: {len(bench_qids)} bench + "
+        f"{len(dev_qids)} dev + {len(test_qids)} test = {len(slice_qids)}"
+    )
+    products = build_slice_catalog(slice_qids, target_total)
+    write_gold_sets(dev_qids, test_qids)
+    return products
+
+
 def main() -> None:
     judged_ids = _load_judged_product_ids()
     products = load_products(judged_ids=judged_ids, distractor_n=DISTRACTOR_N)
