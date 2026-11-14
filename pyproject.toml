@@ -15,6 +15,12 @@ dev = [
     "ruff",
     "pytest",
     "pre-commit",
+    "sentence-transformers",
+    "opentelemetry-sdk",
+    "opentelemetry-api",
+    "fastapi",
+    "uvicorn",
+    "prometheus-client",
 ]
 
 [tool.uv.workspace]

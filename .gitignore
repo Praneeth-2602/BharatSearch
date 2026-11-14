@@ -6,4 +6,8 @@ __pycache__/
 .swp
 .DS_Store
 data/processed/
+data/esci/
 results/
+build/
+*.db
+*.sqlite

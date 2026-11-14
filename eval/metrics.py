@@ -16,6 +16,21 @@ def dcg(labels) -> float:
     return sum(GAIN[label] / math.log2(i + 2) for i, label in enumerate(labels))
 
 
+def query_metrics(ranked, qrels_q, k=10):
+    """Per-query metrics: ndcg@k, mrr@k, recall@k, judged@k.
+
+    ndcg@k is None when the query has no graded items in qrels; recall@k is
+    None when it has no Exact items. Callers average only over applicable
+    queries, which also makes bootstrap resampling per-query straightforward.
+    """
+    return {
+        "ndcg@k": ndcg_at_k(ranked, qrels_q, k=k),
+        "mrr@k": mrr_at_k(ranked, qrels_q, k=k),
+        "recall@k": recall_at_k(ranked, qrels_q, k=k),
+        "judged@k": judged_at_k(ranked, qrels_q, k=k),
+    }
+
+
 def ndcg_at_k(ranked, qrels_q, k=10):
     """NDCG@k. Unjudged products count as 0; skip queries with no relevant item."""
     gains = [qrels_q.get(p, 0) for p in ranked[:k]]
